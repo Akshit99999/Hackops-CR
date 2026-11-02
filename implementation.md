@@ -9,12 +9,12 @@
 
 ## Current frontend milestone (2 November 2026)
 
-The current implementation is **frontend only**, per the requested scope. Next.js 15 / React 19 implements the landing page, dashboard, command center, product scanner, terms agent, warranty vault, and research library. Backend workflows and external integrations remain planned.
+The current frontend milestone remains local-first. The repository also includes a separately usable FastAPI backend with bearer-token workspaces, persistent case and warranty records, private evidence uploads, draft notice PDF generation, nine-category keyword contract screening, exact-sentence retrieval, CPSC/openFDA/Open Food Facts lookups, and Celery reminders. When `NEXT_PUBLIC_BACKEND_URL` is configured, the browser syncs cases, warranties, and evidence and uses the backend for contract and barcode lookups. It does not use LangGraph, Docling, a trained CLAUDETTE model, a generative LLM, email dispatch, or legal eligibility decisions.
 
 - Landing page: EvolveAI-inspired floating pill navigation, oversized editorial typography, geometric hero, numbered sections, animated workspace counters, asymmetric bento previews, and expandable FAQ.
 - Application: responsive sidebar, case ledger and draft export, local product passports and document locker, barcode validation, five-axis contract radar, and exact-sentence chat preview.
 - Persistence: localStorage for workspace records; IndexedDB for document files. Initial records are clearly marked fictional samples.
-- Backend-dependent capabilities (OCR, trained CLAUDETTE, LLM/RAG, live recalls, automatic dispatch, court-ready PDFs, and service location) are not implemented or presented as verified results.
+- Backend capabilities: the REST service provides best-effort text extraction, keyword screening, public-source lookups, and user-reviewed PDF drafts. These features are informational and do not establish legal or product-safety conclusions.
 
 ### Approved palette override
 

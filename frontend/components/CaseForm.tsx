@@ -50,6 +50,7 @@ export function CaseForm({
       createdDate: today(),
       deadline: null,
       documents: selected?.documents || [],
+      sample: selected?.sample,
     });
     notify("Your case is ready to review. Nothing has been sent.");
     onClose();

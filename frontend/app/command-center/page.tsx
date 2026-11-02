@@ -30,6 +30,7 @@ import {
 } from "@/components/ui";
 import { CaseForm } from "@/components/CaseForm";
 import type { DisputeCase } from "@/lib/types";
+import { backendConfigured, downloadBackendFile } from "@/lib/backend";
 
 export default function CommandCenter() {
   const { data, ready, updateCase, notify } = useWorkspace();
@@ -238,8 +239,8 @@ export default function CommandCenter() {
         <div>
           <strong>You’re always in the driver’s seat.</strong>
           <p>
-            Drafts stay in your browser. Review and send them yourself, then
-            record the date to track a 15-day requested response window.
+            Drafts stay in your workspace. Review and send them yourself, then
+            record the date and any response period you choose to track.
           </p>
         </div>
       </div>
@@ -257,13 +258,16 @@ export default function CommandCenter() {
             </Badge>
             <strong>{currency(selected.claimAmount)} requested</strong>
           </div>
-          <pre className="notice-preview">{draftNotice(selected)}</pre>
+          <pre className="notice-preview">{selected.noticeMarkdown || draftNotice(selected)}</pre>
           <div className="form-actions">
             <button
               className="button button-outline"
-              onClick={() =>
-                downloadText(`${selected.id}-notice.md`, draftNotice(selected))
-              }
+              onClick={() => {
+                if (backendConfigured() && !selected.sample)
+                  void downloadBackendFile(`/api/v1/cases/${encodeURIComponent(selected.id)}/notice.md`, `${selected.id}-draft.md`)
+                    .catch(() => notify("Could not export the backend draft. The preview is still available here."));
+                else downloadText(`${selected.id}-notice.md`, draftNotice(selected));
+              }}
             >
               <Download size={16} /> Export draft
             </button>

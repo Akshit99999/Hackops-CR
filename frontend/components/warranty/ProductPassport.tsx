@@ -13,6 +13,7 @@ import { ProductArt } from "@/components/visualizers/ProductArt";
 import { useWorkspace } from "@/lib/workspace";
 import { coverage, currency, formatDate } from "@/lib/utils";
 import { storeDocument, downloadDocument } from "@/lib/documents";
+import { backendConfigured, uploadBackendEvidence } from "@/lib/backend";
 import type { WarrantyItem } from "@/lib/types";
 
 export function ProductPassport({
@@ -36,8 +37,27 @@ export function ProductPassport({
     setError("");
     try {
       const document = await storeDocument(file);
-      updateWarranty({ ...item, documents: [...item.documents, document] });
-      notify("Receipt saved in this browser. SHA-256 hash recorded.");
+      let savedDocument = document;
+      if (backendConfigured() && !item.sample) {
+        try {
+          const response = await uploadBackendEvidence(
+            `/warranty/items/${encodeURIComponent(item.id)}/documents`,
+            file,
+            document.id,
+          );
+          const uploaded = response.document;
+          savedDocument = {
+            ...document,
+            backendUrl: String(uploaded.download_url || ""),
+          };
+          notify("Receipt saved in this browser and your backend workspace.");
+        } catch {
+          notify("Receipt saved in this browser. Backend upload failed, so it remains local.");
+        }
+      } else {
+        notify("Receipt saved in this browser. SHA-256 hash recorded.");
+      }
+      updateWarranty({ ...item, documents: [...item.documents, savedDocument] });
     } catch (error) {
       setError(
         error instanceof Error ? error.message : "Could not store this file.",
@@ -113,7 +133,7 @@ export function ProductPassport({
         <h3>The important paperwork.</h3>
         <p>
           Attach receipts, warranty certificates, or serial photos. Files stay
-          in this browser; the hash records integrity, not legal verification.
+          in this browser{backendConfigured() ? " and sync to your connected workspace" : ""}; the hash records integrity, not legal verification.
         </p>
         <input
           ref={input}
@@ -150,7 +170,7 @@ export function ProductPassport({
               ? "Saving your document…"
               : "Drop a document here, or browse files"}
             <small>
-              PDF, PNG, or JPEG · up to 10 MB · manual entry, no OCR
+              PDF, PNG, or JPEG · up to 10 MB · OCR suggestions when the backend is connected
             </small>
           </span>
         </button>

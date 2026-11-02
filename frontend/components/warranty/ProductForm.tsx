@@ -10,10 +10,12 @@ export function ProductForm({
   onClose,
   initialName = "",
   initialBrand = "",
+  initialSample = false,
 }: {
   onClose: () => void;
   initialName?: string;
   initialBrand?: string;
+  initialSample?: boolean;
 }) {
   const { addWarranty, notify } = useWorkspace();
   const [error, setError] = useState("");
@@ -38,6 +40,7 @@ export function ProductForm({
       warrantyDurationMonths: Number(form.get("months")),
       expiryDate: expiryDate(purchaseDate, Number(form.get("months"))),
       documents: [],
+      sample: initialSample,
     });
     notify(
       "A new purchase, all in one place. Open its passport to add a receipt.",
@@ -153,8 +156,8 @@ export function ProductForm({
         )}
         <div className="form-actions">
           <span className="form-note">
-            Saved in this browser. Coverage dates are based on the details you
-            enter.
+            Saved in your workspace. Coverage dates are based on the details
+            you enter.
           </span>
           <button className="button button-primary" type="submit">
             Add to my vault <ArrowUpRight size={16} />

@@ -21,6 +21,7 @@ import { useWorkspace } from "@/lib/workspace";
 import { currency, coverage } from "@/lib/utils";
 import { ProductArt } from "@/components/visualizers/ProductArt";
 import { RiskRadar } from "@/components/visualizers/RiskRadar";
+import { backendConfigured } from "@/lib/backend";
 import "./landing.css";
 
 function Counter({ value, money = false }: { value: number; money?: boolean }) {
@@ -64,7 +65,7 @@ const questions = [
   {
     title: "What can I do with Hackops-CR today?",
     answer:
-      "Explore the frontend, create resolution cases, organize purchases and receipts, screen pasted terms with keyword rules, and export draft notices. Data is saved in your browser. The first visit includes fictional sample records you can replace from workspace settings.",
+      "Explore the workspace, create resolution cases, organize purchases and receipts, screen pasted terms with keyword rules, and export draft notices. Data is saved in your browser by default; you can connect the FastAPI service for backend sync. The first visit includes fictional sample records you can replace from workspace settings.",
   },
   {
     title: "Will Hackops send a notice on my behalf?",
@@ -74,12 +75,12 @@ const questions = [
   {
     title: "Where are my receipts and purchase details stored?",
     answer:
-      "Workspace details are stored in localStorage and documents in IndexedDB in this browser. There is no cloud account or backup yet. Clearing browser data removes them, so keep your original paperwork.",
+      "Workspace details and document copies stay in this browser by default. With the optional API configured, cases, warranty records, and evidence also sync to a private bearer-token workspace. Keep your originals; this is not an account or recovery service.",
   },
   {
     title: "Are the product and contract results verified?",
     answer:
-      "The scanner validates barcode checksums and shows a fictional sample. Recall databases are planned integrations. Contract screening uses keyword rules, and the chat preview retrieves exact sentences from your text. Neither provides a legal eligibility or enforceability determination.",
+      "The scanner validates barcode checksums and can query public product and recall sources through the optional API. Contract screening uses keyword rules, and the chat retrieves exact sentences from your text. A missing result does not prove product safety, and neither feature determines legal eligibility or enforceability.",
   },
 ];
 
@@ -523,7 +524,7 @@ export default function LandingPage() {
           <p>
             A few things to know about
             <br />
-            this frontend preview.
+            this workspace.
           </p>
         </div>
         <div className="faq-items">
@@ -582,8 +583,8 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="landing-preview-note">
-            <span className="status-dot" /> Frontend preview · Browser-local
-            data · No account required
+            <span className="status-dot" /> Local-first · Optional backend ·
+            No account required
           </div>
         </div>
       </section>

@@ -20,6 +20,7 @@ import { RiskRadar } from "@/components/visualizers/RiskRadar";
 import { SAMPLE_TERMS, auditContract, findPassages } from "@/lib/contracts";
 import { downloadText } from "@/lib/utils";
 import type { ContractAudit } from "@/lib/types";
+import { backendConfigured, backendRequest } from "@/lib/backend";
 
 interface Message {
   id: string;
@@ -35,15 +36,33 @@ export default function TermsAgent() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState("");
-  function runAudit(event: React.FormEvent) {
+  const [auditRemote, setAuditRemote] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
+  async function runAudit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
     if (text.trim().length < 30) {
       setError("Paste at least 30 characters of terms to start the review.");
       return;
     }
-    const result = auditContract(text.trim());
+    let result: ContractAudit;
+    let usingBackend = false;
+    if (backendConfigured()) {
+      try {
+        result = await backendRequest<ContractAudit & { method?: string }>("/contracts/audit", {
+          method: "POST",
+          body: JSON.stringify({ title: "Pasted contract", source_name: "Pasted text", text: text.trim() }),
+        });
+        usingBackend = true;
+      } catch {
+        result = auditContract(text.trim());
+        setError("Backend screening was unavailable. Showing the local keyword preview instead.");
+      }
+    } else {
+      result = auditContract(text.trim());
+    }
     setAudit(result);
+    setAuditRemote(usingBackend);
     setMessages([]);
     setQuestion("");
     addActivity(
@@ -51,14 +70,43 @@ export default function TermsAgent() {
       `${result.sentences.length} sentences reviewed · ${result.flags.length} keyword matches`,
       "audit",
     );
-    notify("Screening complete. Review each passage in context.");
+    notify(usingBackend
+      ? "Backend screening complete. Review each passage in context."
+      : "Screening complete. Review each passage in context.");
   }
-  function ask(value: string) {
+  async function ask(value: string) {
     if (!audit || value.trim().length < 3) return;
+    const userMessage = { id: crypto.randomUUID(), role: "user" as const, text: value.trim() };
+    setMessages((prev) => [...prev, userMessage]);
+    setChatLoading(true);
+    if (auditRemote) {
+      try {
+        const response = await backendRequest<{
+          answer: string;
+          citations: { sentence_id: string; quote: string }[];
+        }>("/contracts/chat", {
+          method: "POST",
+          body: JSON.stringify({ contract_id: audit.id, question: value.trim() }),
+        });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "agent",
+            text: response.answer,
+            citations: response.citations.map((citation) => ({ id: citation.sentence_id, text: citation.quote })),
+          },
+        ]);
+        setQuestion("");
+        setChatLoading(false);
+        return;
+      } catch {
+        setError("Backend retrieval was unavailable; using local sentence search for this answer.");
+      }
+    }
     const passages = findPassages(audit, value.trim());
     setMessages((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), role: "user", text: value.trim() },
       {
         id: crypto.randomUUID(),
         role: "agent",
@@ -69,6 +117,7 @@ export default function TermsAgent() {
       },
     ]);
     setQuestion("");
+    setChatLoading(false);
   }
   return (
     <div>
@@ -79,9 +128,9 @@ export default function TermsAgent() {
       />
       <div className="preview-strip">
         <Info size={16} />
-        Frontend screening uses keywords across nine categories. Scores are
-        illustrative signals; no trained CLAUDETTE model or live AI is
-        connected.
+        {backendConfigured()
+          ? "The backend screens nine categories with transparent keyword rules and answers with exact passages from your text; it does not use a trained model."
+          : "Screening uses keywords across nine categories. Scores are illustrative signals; no trained CLAUDETTE model or live AI is connected."}
       </div>
       <div className="terms-layout">
         <form className="panel terms-input-panel" onSubmit={runAudit}>
@@ -208,7 +257,7 @@ export default function TermsAgent() {
               </span>
               <div>
                 <h2>A question about the details?</h2>
-                <p>LexiBot preview · exact passages from your document</p>
+            <p>{auditRemote ? "Backend retrieval · exact passages from your document" : "Sentence search · exact passages from your document"}</p>
               </div>
               <Badge tone="neutral">Sentence search</Badge>
             </div>
@@ -234,6 +283,7 @@ export default function TermsAgent() {
                   ))}
                 </div>
               ))}
+              {chatLoading && <div className="chat-message"><small>LEXIBOT</small>Looking for matching sentences…</div>}
             </div>
             <div className="chat-suggestions">
               {[
@@ -269,6 +319,7 @@ export default function TermsAgent() {
               <button
                 className="button button-primary"
                 type="submit"
+                disabled={chatLoading}
                 aria-label="Find relevant passages"
               >
                 <Send size={16} />

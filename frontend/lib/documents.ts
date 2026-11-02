@@ -1,4 +1,5 @@
 import type { EvidenceDocument } from "./types";
+import { fetchBackendDocument } from "./backend";
 
 function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -51,23 +52,30 @@ export async function storeDocument(file: File): Promise<EvidenceDocument> {
   }).finally(() => db.close());
   return document;
 }
-export async function downloadDocument(document: EvidenceDocument) {
+export async function loadDocumentBlob(id: string): Promise<Blob | null> {
   const db = await openDatabase();
-  const file = await new Promise<Blob>((resolve, reject) => {
+  return new Promise<Blob | null>((resolve, reject) => {
     const request = db
       .transaction("files")
       .objectStore("files")
-      .get(document.id);
+      .get(id);
     request.onsuccess = () =>
-      request.result
-        ? resolve(request.result)
-        : reject(
-            new Error(
-              "This file is no longer stored in this browser. Upload it again.",
-            ),
-          );
+      resolve(request.result || null);
     request.onerror = () => reject(new Error("Could not read this document."));
   }).finally(() => db.close());
+}
+
+export async function downloadDocument(document: EvidenceDocument) {
+  let file: Blob | null = null;
+  try {
+    file = await loadDocumentBlob(document.id);
+  } catch {
+    /* The connected backend may still have a server-side copy. */
+  }
+  if (!file && document.backendUrl)
+    file = await fetchBackendDocument(document.backendUrl);
+  if (!file)
+    throw new Error("This file is no longer stored in this browser or connected backend. Upload it again.");
   const url = URL.createObjectURL(file);
   const link = window.document.createElement("a");
   link.href = url;
