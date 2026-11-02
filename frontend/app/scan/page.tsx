@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ScanLine,
   ShieldCheck,
@@ -10,101 +10,195 @@ import {
   Plus,
   Info,
   Barcode,
+  LoaderCircle,
+  Package,
+  Leaf,
+  RotateCcw,
 } from "lucide-react";
 import { PageHeading, Badge } from "@/components/ui";
 import { BarcodeCamera } from "@/components/scanner/BarcodeCamera";
-import { ProductArt } from "@/components/visualizers/ProductArt";
 import { ProductForm } from "@/components/warranty/ProductForm";
+import { parseBarcode, type ProductBarcode } from "@/lib/barcodes";
+import type {
+  ProductLookup,
+  ScannedProduct,
+  RecallLookup,
+} from "@/lib/products";
 import { backendConfigured, backendRequest } from "@/lib/backend";
+import type { WarrantyItem } from "@/lib/types";
+import "./scanner.css";
 
-const SAMPLE = "5901234123457";
-function parseBarcode(raw: string) {
-  let value = raw.trim();
-  if (/^https:\/\//i.test(value)) {
-    const match = value.match(/\/01\/(\d{14})(?:[/?#]|$)/);
-    if (!match)
-      throw new Error(
-        "Enter a GS1 Digital Link containing /01/ followed by a 14-digit GTIN.",
-      );
-    value = match[1];
-  }
-  if (!/^\d+$/.test(value) || ![8, 12, 13, 14].includes(value.length))
-    throw new Error("Enter a GTIN-8, UPC-A, EAN-13, or GTIN-14 barcode.");
-  const sum = value
-    .slice(0, -1)
-    .split("")
-    .reverse()
-    .reduce(
-      (total, digit, index) =>
-        total + Number(digit) * (index % 2 === 0 ? 3 : 1),
-      0,
-    );
-  if ((10 - (sum % 10)) % 10 !== Number(value.at(-1)))
-    throw new Error(
-      "That barcode’s check digit doesn’t match. Check the numbers and try again.",
-    );
-  return value;
+type LookupState =
+  | { phase: "idle" }
+  | { phase: "loading"; barcode: string }
+  | { phase: "done"; result: ProductLookup }
+  | { phase: "error"; barcode: string; message: string };
+
+function vaultCategory(
+  product: ScannedProduct | null,
+): WarrantyItem["category"] {
+  const category = product?.category.toLowerCase() || "";
+  if (/audio|headphone|speaker/.test(category)) return "Audio";
+  if (/computer|mobile|phone|tablet|laptop/.test(category)) return "Computing";
+  if (/home|kitchen|appliance|furniture/.test(category)) return "Home";
+  return "Other";
+}
+
+function ProductImage({ product }: { product: ScannedProduct | null }) {
+  const [failed, setFailed] = useState(false);
+  return product?.image && !failed ? (
+    <div className="scan-product-image">
+      <img
+        src={product.image}
+        alt={product.name}
+        referrerPolicy="no-referrer"
+        onError={() => setFailed(true)}
+      />
+    </div>
+  ) : (
+    <span className="empty-icon">
+      <Barcode size={32} />
+    </span>
+  );
 }
 
 export default function ScanPage() {
   const [barcode, setBarcode] = useState("");
-  const [result, setResult] = useState<string | null>(null);
-  const [lookupData, setLookupData] = useState<Record<string, any> | null>(null);
-  const [lookupLoading, setLookupLoading] = useState(false);
+  const [state, setState] = useState<LookupState>({ phase: "idle" });
+  const [parsed, setParsed] = useState<ProductBarcode | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-  const sample = result === SAMPLE;
-  const sourceLinks = lookupData
-    ? [lookupData.product?.source_url, ...(lookupData.recalls || []).map((entry: Record<string, any>) => entry.source_url)]
-        .filter((value: unknown): value is string => typeof value === "string" && value.startsWith("https://"))
-    : [];
-  function lookup(value: string) {
+  const [recalls, setRecalls] = useState<{
+    phase: "idle" | "loading" | "done" | "error";
+    data?: RecallLookup;
+  }>({ phase: "idle" });
+  const request = useRef<AbortController | null>(null);
+  const sequence = useRef(0);
+  useEffect(
+    () => () => {
+      sequence.current++;
+      request.current?.abort();
+    },
+    [],
+  );
+
+  async function lookup(value: string, format?: string) {
+    request.current?.abort();
+    const id = ++sequence.current;
     setError("");
+    setSaving(false);
+    setRecalls({ phase: "idle" });
+    let code: ProductBarcode;
     try {
-      const entered = value.trim();
-      const parsed = parseBarcode(value);
-      setResult(parsed);
-      setBarcode(parsed);
-      setLookupData(null);
-      if (backendConfigured() && parsed !== SAMPLE) {
-        setLookupLoading(true);
-        void backendRequest<Record<string, any>>("/scan/lookup", {
+      code = parseBarcode(value, format);
+    } catch (error) {
+      setParsed(null);
+      setState({ phase: "idle" });
+      setError(error instanceof Error ? error.message : "Check your barcode.");
+      return;
+    }
+    setParsed(code);
+    setBarcode(code.gtin);
+    setState({ phase: "loading", barcode: code.gtin });
+    const controller = new AbortController();
+    request.current = controller;
+    const signal = AbortSignal.any([
+      controller.signal,
+      AbortSignal.timeout(20000),
+    ]);
+    try {
+      const response = await fetch(`/api/scan/${code.gtin}`, { signal });
+      const payload = await response.json();
+      if (id !== sequence.current) return;
+      if (
+        !["found", "not_found", "unavailable"].includes(payload.status) ||
+        !Array.isArray(payload.sources) ||
+        (payload.status === "found" && !payload.product?.name)
+      )
+        throw new Error(
+          payload.detail ||
+            "Could not read the product catalog response. Please try again.",
+        );
+      setState({ phase: "done", result: payload as ProductLookup });
+      if (backendConfigured()) {
+        setRecalls({ phase: "loading" });
+        void backendRequest<RecallLookup>("/scan/lookup", {
           method: "POST",
-          body: JSON.stringify({ barcode: entered }),
+          signal: AbortSignal.any([
+            controller.signal,
+            AbortSignal.timeout(25000),
+          ]),
+          body: JSON.stringify({
+            barcode: code.gtin,
+            product_name: payload.product?.name,
+            brand: payload.product?.brand,
+            model_number: payload.product?.model,
+          }),
         })
-          .then(setLookupData)
-          .catch(() => setError("Product sources could not be reached. The barcode is valid, but no live lookup is available right now."))
-          .finally(() => setLookupLoading(false));
+          .then((data) => {
+            if (id === sequence.current) setRecalls({ phase: "done", data });
+          })
+          .catch(() => {
+            if (id === sequence.current && !controller.signal.aborted)
+              setRecalls({ phase: "error" });
+          });
       }
     } catch (error) {
-      setResult(null);
-      setLookupData(null);
-      setError(error instanceof Error ? error.message : "Check your barcode.");
+      if (id !== sequence.current || controller.signal.aborted) return;
+      setState({
+        phase: "error",
+        barcode: code.gtin,
+        message: signal.aborted
+          ? "The product lookup timed out. Please try again."
+          : error instanceof TypeError
+            ? "Could not reach the product lookup. Check your connection and try again."
+            : error instanceof Error
+              ? error.message
+              : "Product lookup failed. Please try again.",
+      });
     }
   }
+  function reset() {
+    sequence.current++;
+    request.current?.abort();
+    setState({ phase: "idle" });
+    setBarcode("");
+    setParsed(null);
+    setError("");
+    setRecalls({ phase: "idle" });
+  }
+  const result = state.phase === "done" ? state.result : null;
+  const product = result?.product || null;
+  const loading = state.phase === "loading";
+  const unavailable = result?.status === "unavailable";
+
   return (
     <div>
       <PageHeading
         eyebrow="THERE’S MORE BEHIND THE LABEL"
         title="Look a little closer."
-        description="A barcode is just the beginning. Know more about what you bring home."
+        description="Scan a product barcode to find its name, brand, and available catalog details."
       />
       <div className="preview-strip">
         <Info size={16} />
-        {backendConfigured()
-          ? "Barcode checks query public product and recall sources when available. A missing match is not proof that a product is safe."
-          : "Scanner preview: barcode validation and a fictional sample. Set NEXT_PUBLIC_BACKEND_URL to connect product and recall sources."}
+        Live catalog lookup · Scan with your camera, upload a barcode photo, or
+        enter its digits. Product coverage varies by catalog.
       </div>
       <div className="scanner-layout">
         <section className="panel scanner-panel">
           <h2>Meet your next purchase.</h2>
-          <p>Use your camera or enter the numbers beneath the barcode.</p>
-          <BarcodeCamera onDetected={lookup} />
+          <p>
+            Keep the entire barcode in view, with good light and a little space
+            around the edges.
+          </p>
+          <BarcodeCamera
+            onDetected={(value, format) => void lookup(value, format)}
+          />
           <form
             className="scanner-manual"
             onSubmit={(event) => {
               event.preventDefault();
-              lookup(barcode);
+              void lookup(barcode);
             }}
           >
             <label className="field">
@@ -114,7 +208,9 @@ export default function ScanPage() {
                 onChange={(event) => setBarcode(event.target.value)}
                 required
                 maxLength={500}
-                placeholder="e.g. 5901234123457"
+                placeholder="e.g. 0885909950805"
+                autoComplete="off"
+                spellCheck={false}
               />
             </label>
             {error && (
@@ -126,171 +222,359 @@ export default function ScanPage() {
                 {error}
               </p>
             )}
-            <button type="submit" className="button button-primary">
-              Look up product <ArrowUpRight size={16} />
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={loading}
+            >
+              {loading ? (
+                <LoaderCircle size={16} className="spin" />
+              ) : (
+                <ArrowUpRight size={16} />
+              )}
+              {loading ? "Looking up product…" : "Look up product"}
             </button>
             <div className="scanner-example">
-              Just looking around?
-              <button type="button" onClick={() => lookup(SAMPLE)}>
-                Try a sample scan
+              Try a real barcode:
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void lookup("0885909950805")}
+              >
+                iPhone 6
+              </button>
+              <span>·</span>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => void lookup("0049000028911")}
+              >
+                Diet Coke
               </button>
             </div>
           </form>
         </section>
-        <section className="panel scanner-result" aria-live="polite">
-          {!result ? (
+        <section
+          className="panel scanner-result"
+          aria-live="polite"
+          aria-busy={loading}
+        >
+          {state.phase === "idle" && (
             <div className="result-empty">
               <span>
                 <ScanLine size={36} strokeWidth={1.25} />
               </span>
               <h2>A little less guesswork.</h2>
               <p>
-                Scan a barcode to see how product information will come together
-                here.
+                Scan a barcode to look up the product across public food and
+                general-product catalogs.
               </p>
-              <small>YOUR NEXT PURCHASE, WITH MORE CONTEXT.</small>
+              <small>REAL PRODUCT DATA. A CLEARER STARTING POINT.</small>
             </div>
-          ) : (
+          )}
+          {loading && (
+            <div className="result-empty scan-loading">
+              <span>
+                <LoaderCircle className="spin" size={32} />
+              </span>
+              <h2>Finding your product.</h2>
+              <p className="mono">{state.barcode}</p>
+              <p>
+                Checking public product catalogs. This may take a few seconds.
+              </p>
+              <button className="button button-outline" onClick={reset}>
+                Cancel lookup
+              </button>
+            </div>
+          )}
+          {state.phase === "error" && (
+            <div className="result-empty">
+              <span>
+                <Info size={30} />
+              </span>
+              <h2>Let’s try that again.</h2>
+              <p>{state.message}</p>
+              <button
+                className="button button-primary"
+                onClick={() => void lookup(state.barcode)}
+              >
+                <RotateCcw size={15} /> Retry lookup
+              </button>
+              <button className="text-link" onClick={reset}>
+                Scan another product
+              </button>
+            </div>
+          )}
+          {result && (
             <>
               <div className="section-heading">
                 <span className="eyebrow" style={{ marginBottom: 0 }}>
-                  PRODUCT PASSPORT PREVIEW
+                  PRODUCT LOOKUP
                 </span>
-                <Badge tone={sample ? "amber" : "green"}>
-                  {sample ? "Fictional sample" : "Valid barcode"}
+                <Badge tone={product ? "green" : "neutral"}>
+                  {product
+                    ? "Catalog match"
+                    : unavailable
+                      ? "Service unavailable"
+                      : "No listing found"}
                 </Badge>
               </div>
               <div className="scan-product-header">
-                {sample ? (
-                  <ProductArt category="Audio" />
-                ) : (
-                  <span className="empty-icon">
-                    <Barcode size={32} />
-                  </span>
-                )}
+                <ProductImage key={result.barcode} product={product} />
                 <div>
                   <span className="eyebrow">
-                    {sample
-                      ? "SONORA · SAMPLE PRODUCT"
-                      : "READY FOR A FUTURE LOOKUP"}
+                    {product?.brand ||
+                      (product ? "BRAND NOT LISTED" : "PRODUCT BARCODE")}
                   </span>
                   <h2>
-                    {sample
-                      ? "Studio Headphones Pro"
-                      : lookupData?.product?.name || "Barcode lookup"}
+                    {product?.name ||
+                      (unavailable
+                        ? "Catalogs couldn’t be reached."
+                        : "This product isn’t listed yet.")}
                   </h2>
-                  {!sample && lookupData?.product?.brand && <p>{lookupData.product.brand}</p>}
-                  <p className="mono">{result}</p>
+                  <p className="mono">{result.barcode}</p>
                 </div>
               </div>
-              {lookupLoading && <p className="form-note">Checking public sources…</p>}
-              {lookupData ? (
+              {product ? (
                 <>
+                  <div className="scan-product-facts">
+                    <Fact
+                      icon={Package}
+                      title="Package / size"
+                      value={product.quantity || "Not provided in the listing"}
+                    />
+                    <Fact
+                      icon={Building2}
+                      title="Category"
+                      value={product.category || "Not provided in the listing"}
+                    />
+                    {product.model && (
+                      <Fact
+                        icon={Barcode}
+                        title="Model"
+                        value={product.model}
+                      />
+                    )}
+                    {product.nutriScore && (
+                      <Fact
+                        icon={Leaf}
+                        title="Nutri-Score"
+                        value={`${product.nutriScore} · as listed by ${product.source.name}`}
+                      />
+                    )}
+                  </div>
+                  {product.description && (
+                    <details className="scan-description">
+                      <summary>Product description</summary>
+                      <p>{product.description}</p>
+                    </details>
+                  )}
+                  {product.ingredients && (
+                    <details className="scan-description">
+                      <summary>Ingredients from the listing</summary>
+                      <p>{product.ingredients}</p>
+                    </details>
+                  )}
+                  {product.allergens.length > 0 && (
+                    <div className="scan-allergens">
+                      <strong>Listed allergens</strong>
+                      <p>{product.allergens.join(", ")}</p>
+                      <small>
+                        Check the actual packaging; catalog data may be
+                        incomplete or outdated.
+                      </small>
+                    </div>
+                  )}
+                  <div className="scan-source">
+                    <span>
+                      Product data:{" "}
+                      <a
+                        href={product.source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {product.source.name}
+                        <ArrowUpRight size={12} />
+                      </a>
+                      {product.source.license && (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <a
+                            href="https://opendatacommons.org/licenses/odbl/1-0/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {product.source.license}
+                          </a>
+                        </>
+                      )}
+                    </span>
+                    <small>
+                      Catalog descriptions can be incomplete or outdated.
+                      Confirm the match against your packaging.
+                    </small>
+                  </div>
+                </>
+              ) : (
+                <p className="scan-empty-description">
+                  {unavailable
+                    ? "The catalog services are temporarily unavailable or have reached their lookup limit. Try again later, or enter the product details yourself."
+                    : "No matching listing was returned by the available catalogs. This can happen with local brands, new products, or incomplete catalog coverage. You can still save the product manually."}
+                </p>
+              )}
+              {(parsed?.lot || parsed?.serial) && (
+                <dl className="scan-identifiers">
+                  {parsed.lot && (
+                    <div>
+                      <dt>GS1 LOT</dt>
+                      <dd>{parsed.lot}</dd>
+                    </div>
+                  )}
+                  {parsed.serial && (
+                    <div>
+                      <dt>GS1 SERIAL</dt>
+                      <dd>{parsed.serial}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+              <details className="scan-catalog-status">
+                <summary>Catalog availability</summary>
+                {result.sources.map((source, index) => (
+                  <div key={`${source.name}-${index}`}>
+                    <span>{source.name}</span>
+                    <span>
+                      {
+                        {
+                          found: "Listing found",
+                          not_found: "No listing",
+                          unavailable: "Unavailable",
+                          rate_limited: "Lookup limit reached",
+                        }[source.status]
+                      }
+                    </span>
+                  </div>
+                ))}
+                <p>
+                  UPCitemDB’s free service has a shared daily request limit.
+                  Successful lookups are cached to reduce requests.
+                </p>
+              </details>
+              {backendConfigured() && (
+                <section className="scan-recalls">
+                  <h3>Public recall records</h3>
+                  {recalls.phase === "loading" ? (
+                    <p role="status">Checking CPSC and openFDA sources…</p>
+                  ) : recalls.phase === "done" && recalls.data ? (
+                    <>
+                      <div className="scan-recall-sources">
+                        {[
+                          ["CPSC", recalls.data.sources.cpsc?.status],
+                          ["openFDA", recalls.data.sources.openfda?.status],
+                        ].map(([name, status]) => (
+                          <span key={name}>
+                            {name}:{" "}
+                            {status === "matched"
+                              ? "Possible match"
+                              : status === "no_match"
+                                ? "No matching record"
+                                : status === "not_queried"
+                                  ? "Not checked"
+                                  : "Unavailable"}
+                          </span>
+                        ))}
+                      </div>
+                      {recalls.data.recalls.map((entry, index) => (
+                        <article className="scan-recall-record" key={index}>
+                          <Badge tone="red">Possible recall match</Badge>
+                          <strong>
+                            {entry.title ||
+                              entry.product ||
+                              entry.recall_number ||
+                              "Recall record"}
+                          </strong>
+                          {entry.reason && <p>{entry.reason}</p>}
+                          {entry.source_url?.startsWith("https://") && (
+                            <a
+                              className="text-link"
+                              href={entry.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Read {entry.source || "source"} record{" "}
+                              <ArrowUpRight size={13} />
+                            </a>
+                          )}
+                        </article>
+                      ))}
+                      <p>
+                        {recalls.data.disclaimer ||
+                          "A missing match does not establish that a product is safe or recall-free. Confirm the model, lot, and dates in the original source."}
+                      </p>
+                    </>
+                  ) : (
+                    <p>
+                      Recall sources could not be reached. A product catalog
+                      match does not establish safety.
+                    </p>
+                  )}
+                </section>
+              )}
+              {product && (
+                <details className="scan-future-checks">
+                  <summary>Additional checks</summary>
                   {[
-                    {
-                      icon: ShieldCheck,
-                      title: "Recall records",
-                      text: lookupData.recalls?.length
-                        ? lookupData.recalls.map((entry: Record<string, any>) => entry.title || entry.product || entry.recall_number).filter(Boolean).join(" · ")
-                        : "No matching record returned. This does not prove the product is recall-free.",
-                      status: lookupData.recalls?.length ? `${lookupData.recalls.length} match(es)` : "No match",
-                    },
+                    ...(!backendConfigured()
+                      ? [
+                          {
+                            icon: ShieldCheck,
+                            title: "Safety recalls",
+                            text: "No live recall check has been performed. Connect the optional backend to query recall sources.",
+                          },
+                        ]
+                      : []),
                     {
                       icon: Scale,
-                      title: "Product details",
-                      text: lookupData.product
-                        ? [lookupData.product.categories, lookupData.product.quantity, lookupData.product.ingredients && `Ingredients: ${lookupData.product.ingredients}`].filter(Boolean).join(" · ") || "A product record was returned without these fields."
-                        : "No matching product details were returned.",
-                      status: lookupData.sources?.open_food_facts?.status || "Not available",
+                      title: "Package history",
+                      text: "No historical weight or price comparison.",
                     },
                     {
-                      icon: Barcode,
-                      title: "Lot and serial",
-                      text: [lookupData.lookup?.lot && `Lot ${lookupData.lookup.lot}`, lookupData.lookup?.serial && `Serial ${lookupData.lookup.serial}`].filter(Boolean).join(" · ") || "Not included in the barcode.",
-                      status: "Identifier",
+                      icon: Wrench,
+                      title: "Repairability",
+                      text: "No verified repairability score available.",
                     },
-                    {
-                      icon: Building2,
-                      title: "Sources",
-                      text: `CPSC: ${lookupData.sources?.cpsc?.status || "unknown"} · openFDA: ${lookupData.sources?.openfda?.status || "unknown"}`,
-                      status: "Public data",
-                    },
-                  ].map(({ icon: Icon, title, text, status }) => (
+                  ].map(({ icon: Icon, title, text }) => (
                     <div className="scan-data-row" key={title}>
-                      <Icon size={18} />
+                      <Icon size={17} />
                       <div>
                         <h3>{title}</h3>
                         <p>{text}</p>
                       </div>
-                      <span>{status}</span>
+                      <span>Not checked</span>
                     </div>
                   ))}
-                  {sourceLinks.length > 0 && (
-                    <div className="scan-result-note">
-                      Sources: {sourceLinks.map((url: string, index: number) => (
-                        <span key={`${url}-${index}`}>
-                          {index > 0 ? " · " : " "}
-                          <a href={url} target="_blank" rel="noreferrer">{new URL(url).hostname}</a>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="scan-result-note">{lookupData.disclaimer}</div>
-                </>
-              ) : [
-                {
-                  icon: ShieldCheck,
-                  title: "Safety recalls",
-                  text: "Public CPSC and openFDA sources",
-                },
-                {
-                  icon: Scale,
-                  title: "Product details",
-                  text: "Open Food Facts product records",
-                },
-                {
-                  icon: Wrench,
-                  title: "Repairability",
-                  text: "No verified repairability source returned",
-                },
-                {
-                  icon: Building2,
-                  title: "Corporate ownership",
-                  text: "No corporate ownership source is queried",
-                },
-              ].map(({ icon: Icon, title, text }) => (
-                <div className="scan-data-row" key={title}>
-                  <Icon size={18} />
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{text}</p>
-                  </div>
-                  <span>Not checked</span>
-                </div>
-              ))}
-              <div className="scan-result-note">
-                {sample
-                  ? "This fictional product shows the planned scorecard layout. "
-                  : lookupData
-                    ? `Lookup completed ${lookupData.retrieved_at || "just now"}. No transparency score is assigned.`
-                    : "This view checks barcode format and checksum only. No transparency score is assigned without source data."}
-              </div>
+                </details>
+              )}
               <div className="scan-result-actions">
                 <button
                   className="button button-primary"
                   onClick={() => setSaving(true)}
                 >
-                  <Plus size={15} /> Add purchase details
+                  <Plus size={15} />
+                  {product ? "Save to warranty vault" : "Add product manually"}
                 </button>
-                <button
-                  className="button button-outline"
-                  onClick={() => {
-                    setResult(null);
-                    setBarcode("");
-                  }}
-                >
+                <button className="button button-outline" onClick={reset}>
                   Scan another
                 </button>
+                {unavailable && (
+                  <button
+                    className="button button-outline"
+                    onClick={() => void lookup(result.barcode)}
+                  >
+                    <RotateCcw size={14} /> Retry
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -299,21 +583,48 @@ export default function ScanPage() {
       <div className="feature-note">
         <ShieldCheck size={18} />
         <div>
-          <strong>Permission on your terms.</strong>
+          <strong>Your camera stays on your device.</strong>
           <p>
-            The camera opens only when you choose it. Images are processed in
-            the browser and the camera stops when you leave.
+            Only the decoded barcode and product identifiers are sent for
+            lookups. Photos are decoded locally and are not uploaded. Camera
+            access stops after a scan, when you cancel, or when you leave this
+            page.
           </p>
         </div>
       </div>
       {saving && (
         <ProductForm
-          initialName={sample ? "Studio Headphones Pro" : ""}
-          initialBrand={sample ? "Sonora" : ""}
-          initialSample={sample}
+          initialName={product?.name || ""}
+          initialBrand={product?.brand || ""}
+          initialModel={product?.model || ""}
+          initialBarcode={parsed?.gtin || ""}
+          initialSerial={parsed?.serial || ""}
+          initialLot={parsed?.lot || ""}
+          initialCategory={vaultCategory(product)}
+          initialSource={product?.source}
           onClose={() => setSaving(false)}
         />
       )}
+    </div>
+  );
+}
+
+function Fact({
+  icon: Icon,
+  title,
+  value,
+}: {
+  icon: typeof Package;
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="scan-data-row">
+      <Icon size={18} />
+      <div>
+        <h3>{title}</h3>
+        <p>{value}</p>
+      </div>
     </div>
   );
 }

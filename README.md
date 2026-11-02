@@ -35,7 +35,7 @@ To connect the browser UI, copy `frontend/.env.example` to `frontend/.env.local`
 | `/` | EvolveAI-inspired landing page |
 | `/dashboard` | Consumer workspace overview |
 | `/command-center` | Case ledger, intake, notice preview, and Markdown export |
-| `/scan` | Camera capability check, GTIN/GS1 validation, and sample scorecard |
+| `/scan` | Camera / image barcode decoding, live catalog lookup, and save-to-vault |
 | `/lexibot` | Keyword-based contract screening, SVG radar, and sentence search |
 | `/warranty-vault` | Product passports, receipt storage, and warranty request drafts |
 | `/research` | Searchable source library |
@@ -44,7 +44,9 @@ The UI uses the approved Deep Abyss / Frosted Slate / Electric Cobalt / Laser Cy
 
 Workspace records persist in localStorage. Uploaded PDF/PNG/JPEG files (up to 10 MB each) are stored in IndexedDB and hashed with WebCrypto SHA-256. Keep original documents: there is no cloud backup. Start with fictional sample records, or choose **Start a fresh workspace** from the workspace menu. Resetting replaces records; clearing site data also removes uploaded files.
 
-With the backend URL configured, the browser app syncs cases, warranty items, and evidence, and uses backend contract screening and public-source product lookup. Without it, the local browser previews continue to work. Camera decoding requires native BarcodeDetector support, camera permission, and a secure context (localhost qualifies); manual entry works without it. The backend does not determine legal eligibility, dispatch notices, or send warranty requests.
+With the backend URL configured, the browser app syncs cases, warranty items, and evidence, and uses backend contract screening and public-source product lookup. Without it, the local browser previews continue to work. The product scanner works without configuring FastAPI: a read-only Next.js route queries Open Food Facts (including its product-type redirects) and falls back to UPCitemDB for general products. UPCitemDB’s keyless free tier has a shared 100-request daily quota; successful upstream requests are cached for an hour. Missing listings and unavailable / rate-limited sources are displayed separately. Data attribution and source links accompany matches.
+
+Camera decoding prefers native BarcodeDetector and falls back to a lazy-loaded ZXing reader. Camera access requires permission and HTTPS or localhost. PNG, JPEG, and WebP barcode photos up to 10 MB are decoded locally, including rotated images; photos are not uploaded. Manual GTIN / GS1 Digital Link entry is also supported. Scanned products prefill the vault form with name, brand, model, barcode, and available lot / serial metadata. When FastAPI is configured, its existing CPSC/openFDA lookup is retained as a separate recall check; a missing recall match is not a safety determination. The backend does not determine legal eligibility, dispatch notices, or send warranty requests.
 
 For the implemented system design, see [architecture decisions, flows, and components](docs/architecture-decisions-flows-components.md). That guide reflects the current code; the longer product blueprint below includes planned concepts that are not part of the running backend.
 

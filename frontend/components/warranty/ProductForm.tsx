@@ -5,17 +5,30 @@ import { Modal } from "@/components/ui";
 import { useWorkspace } from "@/lib/workspace";
 import { today, expiryDate } from "@/lib/utils";
 import type { WarrantyItem } from "@/lib/types";
+import { parseBarcode } from "@/lib/barcodes";
 
 export function ProductForm({
   onClose,
   initialName = "",
   initialBrand = "",
   initialSample = false,
+  initialBarcode = "",
+  initialModel = "",
+  initialSerial = "",
+  initialLot = "",
+  initialCategory = "Audio",
+  initialSource,
 }: {
   onClose: () => void;
   initialName?: string;
   initialBrand?: string;
   initialSample?: boolean;
+  initialBarcode?: string;
+  initialModel?: string;
+  initialSerial?: string;
+  initialLot?: string;
+  initialCategory?: WarrantyItem["category"];
+  initialSource?: WarrantyItem["productSource"];
 }) {
   const { addWarranty, notify } = useWorkspace();
   const [error, setError] = useState("");
@@ -27,6 +40,15 @@ export function ProductForm({
       setError("The purchase date can’t be in the future.");
       return;
     }
+    let barcode: string | undefined;
+    if (String(form.get("barcode") || "").trim()) {
+      try {
+        barcode = parseBarcode(String(form.get("barcode"))).gtin;
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Check the barcode.");
+        return;
+      }
+    }
     addWarranty({
       id: `WV-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
       name: String(form.get("name")).trim(),
@@ -34,6 +56,9 @@ export function ProductForm({
       category: String(form.get("category")) as WarrantyItem["category"],
       modelNumber: String(form.get("modelNumber")).trim(),
       serialNumber: String(form.get("serialNumber")).trim(),
+      barcode,
+      lotNumber: String(form.get("lotNumber") || "").trim() || undefined,
+      productSource: initialSource,
       seller: String(form.get("seller")).trim(),
       purchaseDate,
       purchasePrice: Number(form.get("purchasePrice")),
@@ -80,7 +105,7 @@ export function ProductForm({
           </label>
           <label className="field">
             Category
-            <select name="category">
+            <select name="category" defaultValue={initialCategory}>
               <option>Audio</option>
               <option>Computing</option>
               <option>Home</option>
@@ -102,6 +127,7 @@ export function ProductForm({
             <input
               name="modelNumber"
               maxLength={100}
+              defaultValue={initialModel}
               placeholder="Find this on the label"
             />
           </label>
@@ -110,7 +136,31 @@ export function ProductForm({
             <input
               name="serialNumber"
               maxLength={100}
+              defaultValue={initialSerial}
               placeholder="Your product’s unique identifier"
+            />
+          </label>
+          <label className="field">
+            Product barcode (optional)
+            <input
+              name="barcode"
+              defaultValue={initialBarcode}
+              readOnly={!!initialBarcode}
+              maxLength={14}
+              placeholder="UPC, EAN, or GTIN"
+              inputMode="numeric"
+            />
+            <small>
+              This identifies the product, not the individual serial number.
+            </small>
+          </label>
+          <label className="field">
+            Lot / batch number (optional)
+            <input
+              name="lotNumber"
+              defaultValue={initialLot}
+              maxLength={100}
+              placeholder="Batch number from the packaging"
             />
           </label>
           <label className="field">
@@ -156,8 +206,8 @@ export function ProductForm({
         )}
         <div className="form-actions">
           <span className="form-note">
-            Saved in your workspace. Coverage dates are based on the details
-            you enter.
+            Saved in your workspace. Coverage dates are based on the details you
+            enter.
           </span>
           <button className="button button-primary" type="submit">
             Add to my vault <ArrowUpRight size={16} />

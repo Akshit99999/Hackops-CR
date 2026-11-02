@@ -158,24 +158,32 @@ test("contract screening returns verbatim citations and supports a second audit"
   await expect(page.locator(".chat-citation")).toHaveCount(0);
 });
 
-test("scanner rejects bad checksums and keeps unknown product safety unscored", async ({
+test("scanner rejects bad checksums and allows manual entry for unlisted products", async ({
   page,
 }) => {
+  await page.route("**/api/scan/*", (route) =>
+    route.fulfill({
+      json: {
+        barcode: "4006381333931",
+        status: "not_found",
+        product: null,
+        sources: [{ name: "UPCitemDB", status: "not_found" }],
+      },
+    }),
+  );
   await page.goto("/scan");
   await page.getByLabel("Barcode or GS1 Digital Link").fill("5901234123458");
   await page.getByRole("button", { name: "Look up product" }).click();
   await expect(page.locator(".form-error")).toContainText("check digit");
-  await page.getByRole("button", { name: "Try a sample scan" }).click();
-  await expect(
-    page.getByText("Fictional sample", { exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText("Not checked", { exact: true })).toHaveCount(4);
-  await page.getByRole("button", { name: "Scan another" }).click();
   await page.getByLabel("Barcode or GS1 Digital Link").fill("4006381333931");
   await page.getByRole("button", { name: "Look up product" }).click();
   await expect(
-    page.getByRole("heading", { name: "Barcode validated." }),
+    page.getByRole("heading", { name: "This product isn’t listed yet." }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Add product manually" }).click();
+  await expect(page.getByLabel("Product barcode (optional)")).toHaveValue(
+    "4006381333931",
+  );
 });
 
 test("mobile screens fit and navigation and dialog keyboard controls work", async ({
