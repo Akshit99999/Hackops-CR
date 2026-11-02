@@ -21,6 +21,7 @@ import { useWorkspace } from "@/lib/workspace";
 import { coverage, currency, daysUntil } from "@/lib/utils";
 import { Badge, Loading, SectionHeading, EmptyState } from "@/components/ui";
 import { ProductArt } from "@/components/visualizers/ProductArt";
+import { backendConfigured } from "@/lib/backend";
 
 export default function Overview() {
   const { data, ready } = useWorkspace();
@@ -73,7 +74,7 @@ export default function Overview() {
             </a>
           </div>
           <div className="hero-footnote">
-            <Fingerprint size={15} /> Your workspace. Saved in your browser.
+            <Fingerprint size={15} /> Your workspace. {backendConfigured() ? "Backend sync configured." : "Saved in your browser."}
           </div>
         </div>
         <div className="hero-visual" aria-hidden="true">
@@ -285,7 +286,9 @@ export default function Overview() {
         <span>
           {samples
             ? "You’re exploring a fictional sample workspace. Add your own purchases or start fresh from workspace settings."
-            : "Everything in this preview stays in your browser. Live services will be connected in a future phase."}
+            : backendConfigured()
+              ? "Your workspace syncs to the configured backend. Review each source and keep your original evidence."
+              : "Everything in this preview stays in your browser. Connect the optional backend to sync records and use public-source lookups."}
         </span>
       </div>
     </div>

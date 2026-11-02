@@ -96,7 +96,7 @@ export function LandingChrome({ children }: { children: React.ReactNode }) {
         <div className="landing-footer-bottom">
           <span>© 2026 Hackops-CR</span>
           <span>DESIGNED AROUND THE CONSUMER.</span>
-          <span>Browser-local workspace</span>
+          <span>Local-first · Optional backend</span>
         </div>
       </footer>
     </div>

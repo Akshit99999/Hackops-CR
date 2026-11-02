@@ -17,6 +17,7 @@ import { ProductArt } from "@/components/visualizers/ProductArt";
 import { ProductForm } from "@/components/warranty/ProductForm";
 import { ProductPassport } from "@/components/warranty/ProductPassport";
 import { ClaimWizard } from "@/components/warranty/ClaimWizard";
+import { backendConfigured } from "@/lib/backend";
 
 export default function WarrantyVault() {
   const { data, ready } = useWorkspace();
@@ -220,10 +221,10 @@ export default function WarrantyVault() {
       <div className="feature-note">
         <Archive size={18} />
         <div>
-          <strong>A local home for your records.</strong>
+          <strong>{backendConfigured() ? "A private home for your records." : "A local home for your records."}</strong>
           <p>
-            Details and documents stay in this browser. Recorded dates are
-            reminders, rather than verification of warranty coverage.
+            {backendConfigured() ? "Details and evidence sync to the configured workspace. " : "Details and documents stay in this browser. "}
+            Recorded dates are reminders, rather than verification of warranty coverage.
           </p>
         </div>
       </div>

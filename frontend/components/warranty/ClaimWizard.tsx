@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight, FileDown, ShieldCheck } from "lucide-react";
 import { Modal } from "@/components/ui";
 import { useWorkspace } from "@/lib/workspace";
+import { backendConfigured, backendRequest } from "@/lib/backend";
 import { currency, downloadText, today } from "@/lib/utils";
 import type { WarrantyItem } from "@/lib/types";
 
@@ -17,19 +18,34 @@ export function ClaimWizard({
   const { addCase, notify } = useWorkspace();
   const router = useRouter();
   const [action, setAction] = useState<"request" | "escalate">("request");
-  function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name")).trim();
     const defect = String(form.get("defect")).trim();
     if (action === "request") {
+      let requestMarkdown = `# Warranty service request\n\nFrom: ${name}\nProduct: ${item.name}\nBrand: ${item.brand}\nModel: ${item.modelNumber}\nSerial: ${item.serialNumber}\nSeller: ${item.seller}\nPurchase date: ${item.purchaseDate}\nPurchase price: ${currency(item.purchasePrice)} (USD)\nRecorded warranty end: ${item.expiryDate}\n\n## Issue\n${defect}\n\nPlease confirm coverage and the next steps for service under the applicable warranty.\n\n## Evidence inventory\n${item.documents.map((doc) => `- ${doc.name}: SHA-256 ${doc.sha256}`).join("\n") || "No documents attached."}\n\nCoverage dates are consumer-entered and do not establish eligibility. This request has not been sent. Attach the original documents when contacting the manufacturer.\n${item.sample ? "\nSAMPLE PURCHASE — demonstration only." : ""}`;
+      if (backendConfigured() && !item.sample) {
+        try {
+          const result = await backendRequest<{ content_markdown: string }>("/warranty/claim/generate", {
+            method: "POST",
+            body: JSON.stringify({
+              warranty_item_id: item.id,
+              consumer_name: name,
+              defect,
+              requested_action: "repair or replacement",
+            }),
+          });
+          requestMarkdown = result.content_markdown;
+        } catch {
+          notify("Backend request draft was unavailable; a local draft was exported instead.");
+        }
+      }
       downloadText(
         `${item.id}-warranty-request.md`,
-        `# Warranty service request\n\nFrom: ${name}\nProduct: ${item.name}\nBrand: ${item.brand}\nModel: ${item.modelNumber}\nSerial: ${item.serialNumber}\nSeller: ${item.seller}\nPurchase date: ${item.purchaseDate}\nPurchase price: ${currency(item.purchasePrice)} (USD)\nRecorded warranty end: ${item.expiryDate}\n\n## Issue\n${defect}\n\nPlease confirm coverage and the next steps for service under the applicable warranty.\n\n## Evidence inventory\n${item.documents.map((doc) => `- ${doc.name}: SHA-256 ${doc.sha256}`).join("\n") || "No documents attached."}\n\nCoverage dates are consumer-entered and do not establish eligibility. This request has not been sent. Attach the original documents when contacting the manufacturer.\n${item.sample ? "\nSAMPLE PURCHASE — demonstration only." : ""}`,
+        requestMarkdown,
       );
-      notify(
-        "Your warranty request has been exported. Review it before sending.",
-      );
+      if (!backendConfigured()) notify("Your warranty request has been exported. Review it before sending.");
     } else {
       addCase({
         id: `CR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,

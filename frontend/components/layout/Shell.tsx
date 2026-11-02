@@ -22,6 +22,7 @@ import {
   PanelLeftClose,
 } from "lucide-react";
 import { WorkspaceProvider, useWorkspace } from "@/lib/workspace";
+import { backendConfigured } from "@/lib/backend";
 import { Modal } from "@/components/ui";
 import { LandingChrome } from "./LandingChrome";
 
@@ -80,7 +81,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
           <span>
             Personal workspace
             <small>
-              {samples ? "Demo data · saved locally" : "Saved in this browser"}
+              {samples ? "Demo data · fictional" : backendConfigured() ? "Backend sync configured" : "Saved in this browser"}
             </small>
           </span>
           <ChevronDown size={14} />
@@ -170,7 +171,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
           </div>
           <div className="topbar-actions">
             <span className="local-status">
-              <span className="status-dot" /> Frontend preview
+              <span className="status-dot" /> {backendConfigured() ? "Backend configured" : "Browser-local mode"}
             </span>
             <span className="topbar-divider" />
             <button
@@ -194,7 +195,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
         <footer className="main-footer">
           <span>YOUR PURCHASES. YOUR PROOF. YOUR POWER.</span>
           <span>
-            Hackops-CR <span className="footer-dot">✦</span> Frontend preview ·
+            Hackops-CR <span className="footer-dot">✦</span> Local-first ·
             USD
           </span>
         </footer>
@@ -214,7 +215,9 @@ function Chrome({ children }: { children: React.ReactNode }) {
       {panel === "workspace" && (
         <Modal
           title="Make yourself at home."
-          description="This preview keeps records and documents in this browser. Sample records are fictional."
+          description={backendConfigured()
+            ? "Records sync to the configured private workspace. Sample records are fictional."
+            : "Records and documents stay in this browser. Sample records are fictional."}
           onClose={() => setPanel(null)}
         >
           <div className="settings-options">
@@ -251,8 +254,9 @@ function Chrome({ children }: { children: React.ReactNode }) {
           </div>
           <p className="form-note">
             Resetting replaces your workspace records. Uploaded files remain in
-            browser storage until you clear this site’s data. There is no cloud
-            backup or account in this version.
+            {backendConfigured()
+              ? " browser storage until you clear this site’s data; connected records are also removed from the backend workspace. This is a single-device token, not an account."
+              : " browser storage until you clear this site’s data. Connect the optional backend for private workspace sync."}
           </p>
         </Modal>
       )}
@@ -287,14 +291,14 @@ function Chrome({ children }: { children: React.ReactNode }) {
       {panel === "help" && (
         <Modal
           title="A clearer path forward."
-          description="A quick guide to this frontend preview."
+          description="A quick guide to the workspace."
           onClose={() => setPanel(null)}
         >
           <div className="help-content">
             <h3>Start with what you own.</h3>
             <p>
               Add a product to your warranty vault and attach a receipt. Files
-              stay in this browser and receive a SHA-256 integrity hash.
+              receive a SHA-256 integrity hash and sync when the backend is connected.
             </p>
             <h3>Turn a problem into a plan.</h3>
             <p>
@@ -304,8 +308,8 @@ function Chrome({ children }: { children: React.ReactNode }) {
             <h3>Read between the lines.</h3>
             <p>
               Paste contract text into the terms agent to try keyword screening
-              and sentence-based search. Live AI, recall services, and legal
-              eligibility checks are planned integrations.
+              and exact-sentence retrieval. Public recall lookup is available
+              when connected; no legal eligibility is determined.
             </p>
           </div>
           <Link

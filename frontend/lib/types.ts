@@ -4,6 +4,7 @@ export interface EvidenceDocument {
   size: number;
   sha256: string;
   date: string;
+  backendUrl?: string;
 }
 
 export interface DisputeCase {
@@ -19,6 +20,8 @@ export interface DisputeCase {
   createdDate: string;
   deadline: string | null;
   documents: EvidenceDocument[];
+  noticeMarkdown?: string;
+  merkleRoot?: string;
   sample?: boolean;
 }
 

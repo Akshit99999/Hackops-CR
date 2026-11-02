@@ -7,7 +7,7 @@
 
 ## Run the frontend
 
-The current runnable milestone is a **frontend-only Next.js 15 / React 19 application**. The architecture below remains the full project roadmap.
+The repository includes a Next.js 15 / React 19 frontend and a FastAPI backend. The frontend still defaults to a local browser workspace; the API can also be run and used independently through its OpenAPI interface at `http://127.0.0.1:8000/docs`.
 
 Requires Node.js 20.9+ and npm 11+.
 
@@ -16,7 +16,19 @@ npm install
 npm run dev
 ```
 
-Open [the local app](http://127.0.0.1:3000). No backend, credentials, or environment variables are required.
+Open [the local app](http://127.0.0.1:3000). The default frontend experience needs no credentials or environment variables.
+
+## Run the backend
+
+The full local API stack uses FastAPI, PostgreSQL, Redis, and Celery for scheduled reminders. From the repository root:
+
+```sh
+docker compose up --build
+```
+
+The API is available at [http://127.0.0.1:8000](http://127.0.0.1:8000), with interactive docs at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). For Python-only setup, see [backend/README.md](backend/README.md). Compose's default database password is for local development only.
+
+To connect the browser UI, copy `frontend/.env.example` to `frontend/.env.local`, keep `NEXT_PUBLIC_BACKEND_URL=http://127.0.0.1:8000`, and restart Next.js. Cases, warranty items, document uploads, contract screening, and barcode lookups will then use the API. The browser stores its workspace bearer token in localStorage; this is a local single-device credential, not an account or protection from same-origin script access.
 
 | Route | Screen |
 |---|---|
@@ -32,7 +44,7 @@ The UI uses the approved Deep Abyss / Frosted Slate / Electric Cobalt / Laser Cy
 
 Workspace records persist in localStorage. Uploaded PDF/PNG/JPEG files (up to 10 MB each) are stored in IndexedDB and hashed with WebCrypto SHA-256. Keep original documents: there is no cloud backup. Start with fictional sample records, or choose **Start a fresh workspace** from the workspace menu. Resetting replaces records; clearing site data also removes uploaded files.
 
-The scanner does not query live product or recall services. Camera decoding requires native BarcodeDetector support, camera permission, and a secure context (localhost qualifies); manual entry works without it. Contract review is keyword screening and extractive sentence retrieval. OCR, live AI, legal eligibility decisions, notice dispatch, verified service locators, and PDF packets remain future backend work.
+With the backend URL configured, the browser app syncs cases, warranty items, and evidence, and uses backend contract screening and public-source product lookup. Without it, the local browser previews continue to work. Camera decoding requires native BarcodeDetector support, camera permission, and a secure context (localhost qualifies); manual entry works without it. The backend does not determine legal eligibility, dispatch notices, or send warranty requests.
 
 ### Checks
 
