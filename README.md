@@ -12,7 +12,7 @@ When you shop online or buy products today, the odds are stacked against you:
 - **Data Blind Spots:** Product boxes hide critical safety recalls, stealth size cuts (shrinkflation), and cheap ingredient swaps.
 - **Denied Refunds:** When a product breaks, customer support gives you the runaround hoping you'll give up.
 
-**Hackops-CR** levels the playing field with four powerful, easy-to-use tools.
+**Hackops-CR** levels the playing field with five powerful, easy-to-use tools.
 
 ---
 
@@ -22,11 +22,12 @@ flowchart LR
     A --> C["2. Scan QR\n(Unmask Recalls & Shrinkflation)"]
     A --> D["3. Terms Agent\n(Scan Contracts & Chat with LexiBot)"]
     A --> E["4. DripShield\n(Stop Checkout Junk Fees)"]
+    A --> F["5. Digital Warranty Vault\n(Smart Document & Claim Locker)"]
 ```
 
 ---
 
-## The 4 Core Features
+## The 5 Core Features
 
 ### 1. Autonomous Command Center
 **Tell us what went wrong. We do the rest.**
@@ -78,6 +79,19 @@ flowchart LR
   * 🚨 **Junk Fee Detector:** Identifies unlawful fees under Federal Trade Commission (FTC) rules, such as fake "handling" charges, "platform fees", and disguised taxes.
   * ⚡ **1-Click "De-Drip" Button:** Automatically unchecks sneaky pre-selected boxes (like extra shipping insurance or optional donations) and restores the lowest honest price.
   * 📝 **FTC Complaint Ready:** Saves timestamped proof of price tricks so you can report dishonest merchants with one click.
+
+---
+
+### 5. Digital Warranty Vault
+**FEATURE 5  : Digital Warranty Vault: A smart, AI-powered digital locker that allows consumers to securely store and manage all their product-related documents, including purchase invoices, warranty cards, bills, QR codes, serial numbers, extended warranty certificates and repair receipts, eliminating the risk of losing physical warranty cards or forgetting important details. Users can simply scan a QR code, upload a photograph or PDF, or capture a bill using their camera, and the system automatically extracts important information such as product name, brand, model number, serial number, purchase date, seller details and warranty duration using OCR and AI. It automatically calculates warranty expiry dates and sends timely reminders before the warranty expires. Each purchased product gets its own digital product profile containing its complete purchase history, warranty details and repair records. When a product develops a problem, users can access their stored documents, check warranty conditions, understand potential claim eligibility, identify the manufacturer's authorised service channels and generate a warranty claim request with the necessary supporting documents. It can also support extended warranty tracking, family-wide product management and service history, creating a centralised digital ownership record that protects consumers throughout the entire lifecycle of their purchased products.**
+
+* **Key Highlights:**
+  * 📂 **Centralised Document Vault:** Securely store and manage purchase invoices, warranty cards, bills, QR codes, serial numbers, extended warranty certificates, and repair receipts—eliminating lost paperwork.
+  * 📸 **AI & OCR Extraction:** Scan a QR code, upload a photo/PDF, or capture a receipt with your camera; the system extracts product name, brand, model, serial number, purchase date, seller details, and warranty duration automatically.
+  * ⏳ **Smart Expiry Tracking & Alerts:** Auto-calculates expiration dates and sends timely notifications before warranty coverage ends.
+  * 🗂️ **Digital Product Profiles:** Creates a dedicated lifecycle profile for each product, recording purchase history, warranty terms, and repair records.
+  * 🛠️ **Seamless Warranty Claims:** Instantly inspect stored documents, verify warranty terms, assess claim eligibility, find manufacturer-authorised service centers, and generate complete claim requests.
+  * 👨‍👩‍👧‍👦 **Extended Warranty & Family Sharing:** Tracks extended warranties, family-wide product inventories, and full service histories for complete lifecycle protection.
 
 ---
 
