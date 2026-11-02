@@ -47,7 +47,11 @@ function mapRemoteDocument(document: Record<string, unknown>) {
   };
 }
 
-function mapRemoteWorkspace(snapshot: Record<string, any>): Workspace {
+function mapRemoteWorkspace(snapshot: Record<string, any>, local: Workspace): Workspace {
+  // Keep browser-only catalog metadata when refreshing backend records.
+  const productMetadata = new Map(local.warranties.map(item => [item.id, {
+    barcode: item.barcode, lotNumber: item.lotNumber, productSource: item.productSource,
+  }]));
   return {
     version: 1,
     cases: (snapshot.cases || []).map((item: Record<string, any>) => ({
@@ -68,6 +72,7 @@ function mapRemoteWorkspace(snapshot: Record<string, any>): Workspace {
       sample: item.sample,
     })),
     warranties: (snapshot.warranties || []).map((item: Record<string, any>) => ({
+      ...productMetadata.get(item.id),
       id: item.id,
       name: item.name,
       brand: item.brand,
@@ -225,7 +230,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
           const { snapshot, skippedDocuments } = await initializeBackendWorkspace(local);
           if (skippedDocuments)
             notify(`${skippedDocuments} local document(s) could not be copied to the backend; the browser copy remains available.`);
-          const remote = mapRemoteWorkspace(snapshot);
+          const remote = mapRemoteWorkspace(snapshot, local);
           const samples = {
             cases: local.cases.filter((item: DisputeCase) => item.sample),
             warranties: local.warranties.filter((item: WarrantyItem) => item.sample),

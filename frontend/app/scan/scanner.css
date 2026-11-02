@@ -1,0 +1,324 @@
+.scanner-result {
+  min-width: 0;
+}
+.scan-product-header > div {
+  min-width: 0;
+}
+.scan-product-header h2 {
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.scan-product-header .empty-icon {
+  flex-shrink: 0;
+}
+.scan-product-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 104px;
+  height: 120px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--text-main);
+  padding: 8px;
+}
+.scan-product-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.scanner-engine {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin: -10px 0 20px;
+}
+.scan-image-progress {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 15px;
+  background: color-mix(in srgb, var(--canvas) 94%, transparent);
+  color: var(--text-main);
+  font-size: 12px;
+  z-index: 3;
+}
+.scan-image-progress svg {
+  color: var(--primary);
+}
+.viewfinder.is-scanning .scan-line {
+  animation: scanner-sweep 2.5s ease-in-out infinite;
+}
+.scan-loading .button {
+  margin-top: 22px;
+}
+.result-empty > .button {
+  margin-top: 25px;
+}
+.result-empty > .text-link {
+  margin-top: 16px;
+}
+.scan-product-facts .scan-data-row {
+  padding: 14px 0;
+}
+.scan-data-row > div {
+  min-width: 0;
+}
+.scan-data-row p {
+  overflow-wrap: anywhere;
+  line-height: 1.8;
+}
+.scan-description,
+.scan-catalog-status,
+.scan-future-checks {
+  border-top: 1px solid var(--border);
+  padding: 15px 0;
+}
+.scan-description summary,
+.scan-catalog-status summary,
+.scan-future-checks summary {
+  font-size: 11px;
+  color: var(--text-main);
+  cursor: pointer;
+  line-height: 1.8;
+}
+.scan-description summary:hover,
+.scan-catalog-status summary:hover,
+.scan-future-checks summary:hover {
+  color: var(--primary);
+}
+.scan-description p,
+.scan-catalog-status > p {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+.scan-source {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 15px 0;
+  line-height: 1.8;
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.scan-source a {
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.scan-source small {
+  font-size: 10px;
+}
+.scan-allergens {
+  border: 1px solid var(--status-red-border);
+  background: var(--status-red-bg);
+  border-radius: 6px;
+  padding: 13px;
+  margin: 6px 0 16px;
+}
+.scan-allergens strong {
+  font-size: 11px;
+  color: var(--status-red);
+  font-weight: 500;
+}
+.scan-allergens p {
+  font-size: 12px;
+  color: var(--text-main);
+  margin-top: 5px;
+}
+.scan-allergens small {
+  display: block;
+  font-size: 10px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-top: 8px;
+}
+.scan-empty-description {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  margin: 5px 0 22px;
+}
+.scan-catalog-status > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  padding-top: 12px;
+}
+.scan-catalog-status > div > span:last-child {
+  color: var(--text-main);
+}
+.scan-catalog-status > p {
+  font-size: 9px;
+}
+.scan-future-checks .scan-data-row:first-of-type {
+  margin-top: 10px;
+}
+.scan-identifiers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  padding: 15px 0;
+  margin: 0;
+  border-top: 1px solid var(--border);
+}
+.scan-identifiers dt {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+}
+.scan-identifiers dd {
+  font-family: "JetBrains Mono Variable", monospace;
+  font-size: 11px;
+  color: var(--text-main);
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.scan-result-actions {
+  flex-wrap: wrap;
+}
+.scanner-example {
+  flex-wrap: wrap;
+  line-height: 1.8;
+}
+.scanner-example button {
+  font-size: 11px;
+}
+.viewfinder small {
+  max-width: 90%;
+  text-align: center;
+  z-index: 4;
+  pointer-events: none;
+}
+.scan-future-checks .scan-data-row p {
+  font-size: 10px;
+}
+.scan-future-checks {
+  margin-top: 0;
+}
+@keyframes scanner-sweep {
+  0%,
+  100% {
+    top: 32%;
+  }
+  50% {
+    top: 68%;
+  }
+}
+@media (max-width: 480px) {
+  .scan-product-image {
+    width: 82px;
+    height: 100px;
+  }
+  .scan-product-header {
+    gap: 13px;
+  }
+  .scan-product-header h2 {
+    font-size: 21px;
+  }
+  .scan-product-header .eyebrow {
+    font-size: 9px;
+  }
+  .scan-data-row p {
+    font-size: 11px;
+  }
+  .scanner-buttons {
+    flex-wrap: wrap;
+    gap: 9px;
+  }
+  .scanner-buttons .button {
+    font-size: 11px;
+  }
+  .scanner-example {
+    font-size: 10px;
+    gap: 6px;
+  }
+  .scanner-example button {
+    font-size: 10px;
+  }
+  .scanner-engine {
+    font-size: 9px;
+  }
+  .scan-product-facts .scan-data-row h3 {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewfinder.is-scanning .scan-line {
+    animation: none;
+  }
+}
+
+.scanner-panel .viewfinder {
+  background: radial-gradient(
+    ellipse at center,
+    var(--surface-green),
+    var(--canvas)
+  );
+  border-color: var(--border);
+}
+.scanner-panel .scan-line {
+  background: var(--primary);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.scanner-panel .scan-reticle > span {
+  border-color: var(--primary);
+}
+.scan-product-image {
+  background: var(--card);
+}
+.scan-image-progress {
+  color: var(--text-main);
+}
+.scan-recalls {
+  border-top: 1px solid var(--border);
+  padding: 18px 0;
+}
+.scan-recalls > h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.scan-recalls p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+.scan-recall-sources {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.scan-recall-record {
+  border: 1px solid var(--status-red-border);
+  background: var(--status-red-bg);
+  padding: 14px;
+  border-radius: 9px;
+  margin: 12px 0;
+}
+.scan-recall-record > strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.scan-recall-record .text-link {
+  margin-top: 10px;
+}

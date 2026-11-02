@@ -16,6 +16,10 @@ The current frontend milestone remains local-first. The repository also includes
 - Persistence: localStorage for workspace records; IndexedDB for document files. Initial records are clearly marked fictional samples.
 - Backend capabilities: the REST service provides best-effort text extraction, keyword screening, public-source lookups, and user-reviewed PDF drafts. These features are informational and do not establish legal or product-safety conclusions.
 
+### Product scanner update (based on PR #4)
+
+The scanner now has native BarcodeDetector plus ZXing camera fallback, local image decoding, GTIN / UPC-E validation, GS1 lot / serial parsing, and live product catalog lookups through a read-only Next.js API route. Open Food Facts is preferred; UPCitemDB supplies general-product fallback. Catalog failures, daily limits, and absent records have distinct states. Product details and provenance carry into the warranty vault, and the optional backend CPSC/openFDA lookup remains available. No product safety or repairability score is fabricated. Scanner styling follows PR #4’s CartMax theme tokens.
+
 ### Approved palette override
 
 This palette supersedes the earlier warm/amber examples throughout this specification.

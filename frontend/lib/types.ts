@@ -32,6 +32,9 @@ export interface WarrantyItem {
   category: "Audio" | "Computing" | "Home" | "Other";
   modelNumber: string;
   serialNumber: string;
+  barcode?: string;
+  lotNumber?: string;
+  productSource?: { name: string; url: string };
   seller: string;
   purchaseDate: string;
   purchasePrice: number;
