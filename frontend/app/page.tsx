@@ -113,13 +113,14 @@ export default function LandingPage() {
             <span /> CONSUMER FIRST. ALWAYS.
           </div>
           <div className="landing-wordmark">
-            <h1>
-              HACKOPS<span className="sr-only"> Consumer Rights</span>
+            <h1 aria-label="HACKOPS Consumer Rights">
+              <span className="brand-wordmark-main">CartMax</span>
+              <span className="sr-only">Consumer Rights</span>
             </h1>
             <span className="wordmark-tag">
-              YOUR RIGHTS.
+              SIMPLE. SMART.
               <br />
-              YOUR ADVANTAGE.
+              IN YOUR CORNER.
             </span>
           </div>
           <div className="hero-side-pill">

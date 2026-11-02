@@ -41,11 +41,11 @@ export default function Overview() {
     <div className="overview-page">
       <div className="overview-welcome">
         <div>
-          <span className="eyebrow">YOUR AUTONOMOUS CONSUMER WORKSPACE</span>
+          <span className="eyebrow">CARTMAX CONSUMER PLATFORM</span>
           <h1>
             Your consumer command center.<span className="title-spark">✦</span>
           </h1>
-          <p>Four pillars of protection. One place to take control.</p>
+          <p>Four pillars of protection. Everything you own, organized in one safe place.</p>
         </div>
         <Link href="/command-center?new=1" className="button button-primary">
           <Plus size={16} /> New case

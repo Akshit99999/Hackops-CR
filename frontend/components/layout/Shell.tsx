@@ -62,15 +62,15 @@ function Chrome({ children }: { children: React.ReactNode }) {
         <Link
           href="/"
           className="brand"
-          aria-label="Hackops home"
+          aria-label="CartMax home"
           onClick={() => setMobile(false)}
         >
           <span className="brand-mark">
-            <ShieldCheck size={24} strokeWidth={1.7} />
+            <ShieldCheck size={22} strokeWidth={1.8} />
           </span>
           <span>
-            Hackops<span className="brand-period">-CR</span>
-            <small>CONSUMER DEFENSE PLATFORM</small>
+            CartMax
+            <small>CONSUMER PROTECTION</small>
           </span>
         </Link>
         <button
@@ -96,7 +96,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
               className={`nav-item ${pathname === href ? "active" : ""}`}
               aria-current={pathname === href ? "page" : undefined}
             >
-              <Icon size={18} strokeWidth={1.65} />
+              <Icon size={18} strokeWidth={1.75} />
               <span>{label}</span>
               {href === "/command-center" &&
                 data.cases.filter((item) => item.status !== "Resolved").length >
@@ -117,34 +117,34 @@ function Chrome({ children }: { children: React.ReactNode }) {
           className={`nav-item ${pathname === "/research" ? "active" : ""}`}
           onClick={() => setMobile(false)}
         >
-          <BookOpen size={18} strokeWidth={1.65} />
+          <BookOpen size={18} strokeWidth={1.75} />
           <span>Research library</span>
           <ArrowUpRight size={14} />
         </Link>
         <div className="sidebar-bottom">
           <div className="sidebar-note">
             <span className="mini-spark">
-              <Sparkles size={17} />
+              <Sparkles size={16} />
             </span>
             <h3>
-              A little knowledge.
-              <br />A lot more power.
+              Smart shopping.
+              <br />Lasting confidence.
             </h3>
             <p>
-              Know what you own.
+              Know your rights.
               <br />
-              Know where you stand.
+              Keep what you love covered.
             </p>
             <Link href="/research">
               Explore your rights <ArrowUpRight size={14} />
             </Link>
           </div>
           <button className="help-link" onClick={() => setPanel("help")}>
-            <CircleHelp size={17} /> A hand when you need it{" "}
+            <CircleHelp size={17} /> How CartMax helps you{" "}
             <ArrowUpRight size={13} />
           </button>
           <div className="sidebar-foot">
-            <span className="status-dot" /> Built for the everyday consumer
+            <span className="status-dot" /> Built for everyday shoppers
           </div>
         </div>
       </aside>
@@ -156,7 +156,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               onClick={() => setCollapsed(!collapsed)}
             >
-              <PanelLeftClose size={17} />
+              <PanelLeftClose size={18} />
             </button>
             <button
               className="icon-button mobile-toggle"
@@ -165,13 +165,13 @@ function Chrome({ children }: { children: React.ReactNode }) {
             >
               {mobile ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <span>Workspace</span>
+            <span>CartMax</span>
             <span className="breadcrumb-slash">/</span>
             <strong>{active}</strong>
           </div>
           <div className="topbar-actions">
             <span className="local-status">
-              <span className="status-dot" /> {backendConfigured() ? "Backend configured" : "Browser-local mode"}
+              <span className="status-dot" /> {backendConfigured() ? "Backend synced" : "Secure browser storage"}
             </span>
             <span className="topbar-divider" />
             <button
@@ -183,20 +183,24 @@ function Chrome({ children }: { children: React.ReactNode }) {
               <span />
             </button>
             <button
-              className="user-avatar"
+              className="profile-pill"
               aria-label="Workspace settings"
               onClick={() => setPanel("workspace")}
             >
-              AM
+              <span className="user-avatar">AM</span>
+              <span className="profile-info">
+                <span className="profile-name">Alex Morgan</span>
+                <span className="profile-sub">Personal Vault</span>
+              </span>
+              <ChevronDown size={14} className="profile-chevron" />
             </button>
           </div>
         </header>
         <main key={pathname}>{children}</main>
         <footer className="main-footer">
-          <span>YOUR PURCHASES. YOUR PROOF. YOUR POWER.</span>
+          <span>YOUR PURCHASES. YOUR PROOF. YOUR PEACE OF MIND.</span>
           <span>
-            Hackops-CR <span className="footer-dot">✦</span> Local-first ·
-            USD
+            CartMax <span className="footer-dot">✦</span> Consumer Protection Platform · USD
           </span>
         </footer>
       </div>
@@ -216,8 +220,8 @@ function Chrome({ children }: { children: React.ReactNode }) {
         <Modal
           title="Make yourself at home."
           description={backendConfigured()
-            ? "Records sync to the configured private workspace. Sample records are fictional."
-            : "Records and documents stay in this browser. Sample records are fictional."}
+            ? "Records sync to your private workspace. Sample records are fictional."
+            : "Your records and receipts are saved locally in this browser for complete privacy."}
           onClose={() => setPanel(null)}
         >
           <div className="settings-options">
@@ -232,7 +236,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
               <span>
                 <strong>Start a fresh workspace</strong>
                 <small>
-                  Remove current records and begin with your purchases.
+                  Remove sample records and start fresh with your own purchases.
                 </small>
               </span>
               <ArrowUpRight size={18} />
@@ -246,24 +250,24 @@ function Chrome({ children }: { children: React.ReactNode }) {
             >
               <RotateCcw size={22} />
               <span>
-                <strong>Restore the demo</strong>
-                <small>Replace current records with fictional examples.</small>
+                <strong>Restore sample records</strong>
+                <small>Load helpful illustrative examples to explore features.</small>
               </span>
               <ArrowUpRight size={18} />
             </button>
           </div>
           <p className="form-note">
-            Resetting replaces your workspace records. Uploaded files remain in
-            {backendConfigured()
-              ? " browser storage until you clear this site’s data; connected records are also removed from the backend workspace. This is a single-device token, not an account."
-              : " browser storage until you clear this site’s data. Connect the optional backend for private workspace sync."}
+            Resetting replaces your workspace records. Attached documents remain in
+            browser storage until you clear site data. {backendConfigured()
+              ? "Connected records also update in the private backend workspace."
+              : "No account creation or external cloud storage is required."}
           </p>
         </Modal>
       )}
       {panel === "notifications" && (
         <Modal
-          title="The latest in your corner."
-          description="Recent activity from this workspace."
+          title="Recent Activity"
+          description="Updates and actions from your CartMax workspace."
           onClose={() => setPanel(null)}
         >
           <div className="activity-list">
@@ -282,7 +286,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
               ))
             ) : (
               <p className="muted">
-                All quiet for now. Your next action will appear here.
+                All quiet for now. Your next purchase or dispute update will appear here.
               </p>
             )}
           </div>
@@ -290,26 +294,25 @@ function Chrome({ children }: { children: React.ReactNode }) {
       )}
       {panel === "help" && (
         <Modal
-          title="A clearer path forward."
-          description="A quick guide to the workspace."
+          title="A Clear Guide to CartMax"
+          description="How to get the most out of your consumer protection tools."
           onClose={() => setPanel(null)}
         >
           <div className="help-content">
-            <h3>Start with what you own.</h3>
+            <h3>1. Store your purchases & proof</h3>
             <p>
-              Add a product to your warranty vault and attach a receipt. Files
-              receive a SHA-256 integrity hash and sync when the backend is connected.
+              Add products to your warranty vault and attach receipts. Documents receive
+              a cryptographic SHA-256 integrity seal for tamper-proof evidence{backendConfigured() ? " and sync with your backend" : ""}.
             </p>
-            <h3>Turn a problem into a plan.</h3>
+            <h3>2. Take action on problems</h3>
             <p>
-              Draft a case in the command center, review the notice, and export
-              it. Record it as sent after you contact the merchant yourself.
+              Draft formal dispute notices in the command center. Export clean demand
+              letters citing your statutory rights (UCC § 2-314 and federal warranty laws).
             </p>
-            <h3>Read between the lines.</h3>
+            <h3>3. Understand the fine print</h3>
             <p>
-              Paste contract text into the terms agent to try keyword screening
-              and exact-sentence retrieval. Public recall lookup is available
-              when connected; no legal eligibility is determined.
+              Paste contract text into the terms agent to quickly identify mandatory
+              arbitration, warranty disclaimers, cancellation traps, and unilateral changes.
             </p>
           </div>
           <Link
