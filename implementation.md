@@ -3,7 +3,35 @@
 > **A Production-Grade, Full-Stack Architectural Blueprint for Autonomous Consumer Rights Advocacy, Product Transparency, and Smart Warranty Management**  
 > **Frontend:** Next.js 15 App Router (React 19, Tailwind CSS, Lucide, Recharts)  
 > **Backend:** FastAPI, Python 3.12+, LangGraph Multi-Agent Engine, Celery, Redis, Docling OCR  
-> **Theme:** Modern Warm-Minimalist + Bento Grid + Modern Glassmorphic Editorial  
+> **Theme:** Deep Abyss + Frosted Slate Bento Grid + Glassmorphic Editorial
+
+---
+
+## Current frontend milestone (2 November 2026)
+
+The current implementation is **frontend only**, per the requested scope. Next.js 15 / React 19 implements the landing page, dashboard, command center, product scanner, terms agent, warranty vault, and research library. Backend workflows and external integrations remain planned.
+
+- Landing page: EvolveAI-inspired floating pill navigation, oversized editorial typography, geometric hero, numbered sections, animated workspace counters, asymmetric bento previews, and expandable FAQ.
+- Application: responsive sidebar, case ledger and draft export, local product passports and document locker, barcode validation, five-axis contract radar, and exact-sentence chat preview.
+- Persistence: localStorage for workspace records; IndexedDB for document files. Initial records are clearly marked fictional samples.
+- Backend-dependent capabilities (OCR, trained CLAUDETTE, LLM/RAG, live recalls, automatic dispatch, court-ready PDFs, and service location) are not implemented or presented as verified results.
+
+### Approved palette override
+
+This palette supersedes the earlier warm/amber examples throughout this specification.
+
+| Role | Color | Hex |
+|---|---|---|
+| Canvas / background | Deep Abyss | `#0A0F1D` |
+| Bento card surface | Frosted Slate | `#131B2E` |
+| Card border | Slate | `#1E293B` |
+| Primary text | Cold Platinum | `#F8FAFC` |
+| Muted text / tags | Steel Mist | `#94A3B8` |
+| Primary accent | Electric Cobalt | `#2563EB` |
+| Secondary glow | Laser Cyan | `#06B6D4` |
+| Alert / trap | Warning Coral | `#F43F5E` |
+
+Typography uses bundled Inter and JetBrains Mono. The landing page adopts EvolveAI’s layout and visual rhythm using this approved palette.
 
 ---
 
@@ -154,28 +182,28 @@ The visual identity is characterized as **Modern Warm-Minimalist + Bento Grid + 
 // tailwind.config.ts color tokens
 export const themeColors = {
   canvas: {
-    bg: '#0c0a09', // stone-950 (deep warm obsidian)
-    subtle: '#1c1917', // stone-900
+    bg: '#0A0F1D', // Deep Abyss
+    subtle: '#131B2E', // Frosted Slate
   },
   card: {
-    surface: 'rgba(28, 25, 23, 0.70)', // stone-900/70 with backdrop-blur-md
-    border: 'rgba(68, 64, 60, 0.80)', // stone-800/80
-    hoverBorder: 'rgba(245, 158, 11, 0.40)', // amber-500/40
+    surface: 'rgba(19, 27, 46, 0.70)', // Frosted Slate with backdrop-blur-md
+    border: '#1E293B', // Slate card border
+    hoverBorder: 'rgba(6, 182, 212, 0.40)', // Laser Cyan hover glow
   },
   accent: {
-    amber: '#f59e0b', // amber-500 (Primary CTAs, Active States)
-    terracotta: '#ea580c', // orange-600 (Secondary Highlights)
+    cobalt: '#2563EB', // Electric Cobalt: primary CTAs, active states, focus rings
+    cyan: '#06B6D4', // Laser Cyan: scanner, radar, interactive pills
   },
   status: {
-    active: '#10b981', // emerald-500 (Protected, Verified, On Schedule)
-    warning: '#f59e0b', // amber-500 (Expiring <30d, 15-day Cure Active)
-    alert: '#f43f5e', // rose-500 (Recalled, Expired, Predatory Clause)
+    active: '#06B6D4', // Laser Cyan: recorded coverage and activity
+    attention: '#06B6D4', // Laser Cyan: reminders and response windows
+    alert: '#F43F5E', // Warning Coral: risk flags and expired coverage
   },
   text: {
-    primary: '#fafaf9', // stone-50 (High contrast headlines)
-    secondary: '#d6d3d1', // stone-300 (Body text)
-    muted: '#78716c', // stone-500 (Metadata, timestamps)
-    code: '#f59e0b', // amber-400 (Serials, hashes, statutes)
+    primary: '#F8FAFC', // Cold Platinum
+    secondary: '#CBD5E1', // Supporting body text
+    muted: '#94A3B8', // Steel Mist: metadata and timestamps
+    code: '#94A3B8', // Steel Mist: monospace metadata
   }
 };
 ```

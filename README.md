@@ -1,7 +1,48 @@
 # Hackops-CR: AI-Powered Consumer Rights Platform
 
-> **Modern Warm-Minimalist + Bento Grid + Glassmorphic Editorial Architecture**  
+> **Deep Abyss + Frosted Slate Bento Grid + Glassmorphic Editorial Architecture**
 > An autonomous, full-stack consumer advocacy system designed to protect everyday shoppers from unfair adhesion contracts, lost warranty receipts, hazardous products, and denied warranty claims.
+
+---
+
+## Run the frontend
+
+The current runnable milestone is a **frontend-only Next.js 15 / React 19 application**. The architecture below remains the full project roadmap.
+
+Requires Node.js 20.9+ and npm 11+.
+
+```powershell
+npm install
+npm run dev
+```
+
+Open [the local app](http://127.0.0.1:3000). No backend, credentials, or environment variables are required.
+
+| Route | Screen |
+|---|---|
+| `/` | EvolveAI-inspired landing page |
+| `/dashboard` | Consumer workspace overview |
+| `/command-center` | Case ledger, intake, notice preview, and Markdown export |
+| `/scan` | Camera capability check, GTIN/GS1 validation, and sample scorecard |
+| `/lexibot` | Keyword-based contract screening, SVG radar, and sentence search |
+| `/warranty-vault` | Product passports, receipt storage, and warranty request drafts |
+| `/research` | Searchable source library |
+
+The UI uses the approved Deep Abyss / Frosted Slate / Electric Cobalt / Laser Cyan palette. Inter and JetBrains Mono fonts are bundled locally.
+
+Workspace records persist in localStorage. Uploaded PDF/PNG/JPEG files (up to 10 MB each) are stored in IndexedDB and hashed with WebCrypto SHA-256. Keep original documents: there is no cloud backup. Start with fictional sample records, or choose **Start a fresh workspace** from the workspace menu. Resetting replaces records; clearing site data also removes uploaded files.
+
+The scanner does not query live product or recall services. Camera decoding requires native BarcodeDetector support, camera permission, and a secure context (localhost qualifies); manual entry works without it. Contract review is keyword screening and extractive sentence retrieval. OCR, live AI, legal eligibility decisions, notice dispatch, verified service locators, and PDF packets remain future backend work.
+
+### Checks
+
+```powershell
+npm run typecheck
+npm run build
+npm run test:e2e
+```
+
+Browser tests use an installed Microsoft Edge. To run on another platform, change `channel` in `playwright.config.ts` or install Chromium with Playwright and remove that channel setting.
 
 ---
 
