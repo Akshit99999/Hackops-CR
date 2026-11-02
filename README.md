@@ -46,6 +46,8 @@ Workspace records persist in localStorage. Uploaded PDF/PNG/JPEG files (up to 10
 
 With the backend URL configured, the browser app syncs cases, warranty items, and evidence, and uses backend contract screening and public-source product lookup. Without it, the local browser previews continue to work. Camera decoding requires native BarcodeDetector support, camera permission, and a secure context (localhost qualifies); manual entry works without it. The backend does not determine legal eligibility, dispatch notices, or send warranty requests.
 
+For the implemented system design, see [architecture decisions, flows, and components](docs/architecture-decisions-flows-components.md). That guide reflects the current code; the longer product blueprint below includes planned concepts that are not part of the running backend.
+
 ### Checks
 
 ```powershell
